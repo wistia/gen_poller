@@ -35,7 +35,7 @@ defmodule GenPoller do
 
   defdelegate start_link(mod, args), to: GenServer
   defdelegate start_link(mod, args, opts), to: GenServer
-  defdelegate start(mod, args, opts), to: GenServer
+  defdelegate start(mod, args), to: GenServer
   defdelegate start(mod, args, opts), to: GenServer
 
   @doc """

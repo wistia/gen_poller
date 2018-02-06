@@ -2,13 +2,21 @@ defmodule GenPoller.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :gen_poller,
-     version: "0.1.0",
-     elixir: "~> 1.4",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     aliases: [compile: ["compile --warnings-as-errors"]],
-     deps: deps()]
+    [
+      app: :gen_poller,
+      version: "0.1.0",
+      elixir: "~> 1.4",
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      aliases: [compile: ["compile --warnings-as-errors"]],
+      deps: deps(),
+      package: [
+        description: "a simple, generic behaviour for doing stuff on some interval",
+        maintainers: ["Wistia"],
+        licenses: ["MIT"],
+        links: %{"github" => "https://github.com/wistia/gen_poller"}
+      ]
+    ]
   end
 
   # Configuration for the OTP application
@@ -29,6 +37,8 @@ defmodule GenPoller.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [
+      {:ex_doc, ">= 0.0.0", only: :dev}
+    ]
   end
 end

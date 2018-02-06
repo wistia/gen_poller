@@ -10,6 +10,7 @@ defmodule GenPoller.Mixfile do
       start_permanent: Mix.env == :prod,
       aliases: [compile: ["compile --warnings-as-errors"]],
       deps: deps(),
+      source_url: "https://github.com/wistia/gen_poller",
       package: [
         description: "a simple, generic behaviour for doing stuff on some interval",
         maintainers: ["Wistia"],

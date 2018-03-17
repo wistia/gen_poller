@@ -66,14 +66,15 @@ defmodule GenPoller do
 
       def handle_info(:do_loop, state) do
         case handle_tick(state) do
-          {:continue, state} ->
-            Process.send_after(self(), :do_loop, state[:poll_sleep])
-            {:noreply, state}
+          {:continue, new_state} ->
+            GenPoller.start_loop_in(new_state[:poll_sleep])
+            {:noreply, new_state}
 
-          {:pause, state} ->
-            {:noreply, state}
+          {:pause, new_state} ->
+            {:noreply, new_state}
 
-          res -> res
+          {:stop, reason, new_state} ->
+            {:stop, reason, new_state}
         end
       end
     end

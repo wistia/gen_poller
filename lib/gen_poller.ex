@@ -41,15 +41,15 @@ defmodule GenPoller do
   @doc """
   Resumes or starts the poll loop for the current process.
   """
-  def start_loop do
-    send(self(), :do_loop)
+  def start_loop(pid \\ self()) do
+    send(pid, :do_loop)
   end
 
   @doc """
   Like `start_loop` but resumes the poll loop after `ms` milliseconds
   """
-  def start_loop_in(ms) do
-    Process.send_after(self(), :do_loop, ms)
+  def start_loop_in(pid \\ self(), ms) do
+    Process.send_after(pid, :do_loop, ms)
   end
 
   defmacro __using__(_) do

@@ -23,6 +23,18 @@ defmodule GenPoller.StatelessTest do
     defdelegate handle_tick(args), to: TestPoller
   end
 
+  defmodule ServerTestPoller do
+    use GenPoller.Stateless
+
+    def handle_call(:ping, _from, state) do
+      {:reply, :pong, state}
+    end
+
+    def handle_tick(_args) do
+      :continue
+    end
+  end
+
   test "it passes the original args to the tick function" do
     GenPoller.Stateless.start_link(TestPoller, %{args: [self()], poll_sleep: 1})
     assert_receive_tick_then(fn args ->
@@ -74,5 +86,10 @@ defmodule GenPoller.StatelessTest do
     refute_receive_tick()
     GenPoller.start_loop(pid)
     assert_receive_tick_then(fn _ -> :ok end)
+  end
+
+  test "it gives us normal GenServer callbacks" do
+    {:ok, pid} = GenPoller.Stateless.start_link(ServerTestPoller, %{poll_sleep: 10})
+    assert :pong == GenServer.call(pid, :ping)
   end
 end

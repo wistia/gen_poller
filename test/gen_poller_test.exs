@@ -24,6 +24,18 @@ defmodule GenPollerTest do
     defdelegate handle_tick(state), to: TestPoller
   end
 
+  defmodule ServerTestPoller do
+    use GenPoller
+
+    def handle_call(:ping, _from, state) do
+      {:reply, :pong, state}
+    end
+
+    def handle_tick(state) do
+      {:continue, state}
+    end
+  end
+
   test "it works" do
     GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
     assert_receive_tick_then(fn _ -> :ok end)
@@ -68,5 +80,10 @@ defmodule GenPollerTest do
     refute_receive_tick()
     GenPoller.start_loop(pid)
     assert_receive_tick_then(fn _ -> :ok end)
+  end
+
+  test "it gives us normal GenServer callbacks" do
+    {:ok, pid} = GenPoller.start_link(ServerTestPoller, %{poll_sleep: 10})
+    assert :pong == GenServer.call(pid, :ping)
   end
 end

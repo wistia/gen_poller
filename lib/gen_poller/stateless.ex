@@ -3,35 +3,17 @@ defmodule GenPoller.Stateless do
   A stateless version of `GenPoller`
   """
 
-  use GenPoller
-
-  @callback init(state :: map) :: GenServer.init
   @callback handle_tick(state :: map) :: :continue | :pause | {:stop, reason :: term()}
 
-  def start_link(mod, state, opts \\ []) do
-    state = put_in(state[:mod], mod)
-    GenPoller.start_link(__MODULE__, state, opts)
-  end
-
-  def start(mod, state, opts \\ []) do
-    state = put_in(state[:mod], mod)
-    GenPoller.start(__MODULE__, state, opts)
-  end
-
-  def init(state) do
-    state.mod.init(state)
-  end
-
-  def handle_tick(state) do
-    case state.mod.handle_tick(state.args) do
-      :continue -> {:continue, state}
-      :pause -> {:pause, state}
-      {:stop, reason} -> {:stop, reason, state}
-    end
-  end
+  defdelegate start_link(mod, args), to: GenServer
+  defdelegate start_link(mod, args, opts), to: GenServer
+  defdelegate start(mod, args), to: GenServer
+  defdelegate start(mod, args, opts), to: GenServer
 
   defmacro __using__(_) do
     quote do
+      use GenServer
+
       @behaviour GenPoller.Stateless
 
       def init(state) do
@@ -39,6 +21,20 @@ defmodule GenPoller.Stateless do
         {:ok, state}
       end
       defoverridable [init: 1]
+
+      def handle_info(:do_loop, state) do
+        case handle_tick(state[:args]) do
+          :continue ->
+            GenPoller.start_loop_in(state[:poll_sleep])
+            {:noreply, state}
+
+          :pause ->
+            {:noreply, state}
+
+          {:stop, reason} ->
+            {:stop, reason, state}
+        end
+      end
     end
   end
 end

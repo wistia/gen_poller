@@ -31,7 +31,7 @@ defmodule GenPoller do
     * Any tuple that is a valid return value for `handle_info`
   """
 
-  @callback handle_tick(state :: any) :: new_state :: any
+  @callback handle_tick(state :: any) :: {:continue, new_state :: any} | {:pause, new_state :: any} | {:stop, reason :: term(), new_state :: any}
 
   defdelegate start_link(mod, args), to: GenServer
   defdelegate start_link(mod, args, opts), to: GenServer

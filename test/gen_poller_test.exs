@@ -1,4 +1,5 @@
 defmodule GenPollerTest do
+  import TestHelper
   use ExUnit.Case
   doctest GenPoller
 
@@ -13,87 +14,59 @@ defmodule GenPollerTest do
     end
   end
 
+  defmodule NoStartTestPoller do
+    use GenPoller
+
+    def init(state) do
+      {:ok, state}
+    end
+
+    defdelegate handle_tick(state), to: TestPoller
+  end
+
   test "it works" do
     GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
-
-    receive do
-      {:tick, _state} -> :ok
-    after
-      10 -> flunk()
-    end
+    assert_receive_tick_then(fn _ -> :ok end)
   end
 
   test "it keeps ticking" do
     {:ok, pid} = GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
-
-    receive do
-      {:tick, state} -> send pid, {:continue, state}
-    after
-      10 -> flunk()
-    end
-
-    receive do
-      {:tick, state} -> send pid, {:continue, state}
-    after
-      10 -> flunk()
-    end
+    assert_receive_tick_then(fn state -> send pid, {:continue, state} end)
+    assert_receive_tick_then(fn _ -> :ok end)
   end
 
   test "it can be paused" do
     {:ok, pid} = GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
-
-    receive do
-      {:tick, state} -> send pid, {:pause, state}
-    after
-      10 -> flunk()
-    end
-
-    receive do
-      _ -> flunk()
-    after
-      10 -> :ok
-    end
+    assert_receive_tick_then(fn state -> send pid, {:pause, state} end)
+    refute_receive_tick()
   end
 
   test "it can be resumed" do
     {:ok, pid} = GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
-
-    receive do
-      {:tick, state} -> send pid, {:pause, state}
-    after
-      10 -> flunk()
-    end
-
+    assert_receive_tick_then(fn state -> send pid, {:pause, state} end)
     GenPoller.start_loop(pid)
-
-    receive do
-      {:tick, _state} -> :ok
-    after
-      10 -> flunk()
-    end
+    assert_receive_tick_then(fn _ -> :ok end)
   end
 
   test "it can be resumed with a delay" do
     {:ok, pid} = GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
-
-    receive do
-      {:tick, state} -> send pid, {:pause, state}
-    after
-      10 -> flunk()
-    end
-
+    assert_receive_tick_then(fn state -> send pid, {:pause, state} end)
     GenPoller.start_loop_in(pid, 15)
+    refute_receive_tick()
+    assert_receive_tick_then(fn _ -> :ok end)
+  end
 
-    receive do
-      _ -> flunk()
-    after
-      10 -> :ok
-    end
+  test "it can be stopped" do
+    {:ok, pid} = GenPoller.start_link(TestPoller, %{receiver: self(), poll_sleep: 1})
+    assert_receive_tick_then(fn state -> send pid, {:stop, :normal, state} end)
+    Process.sleep(10)
+    refute Process.alive?(pid)
+  end
 
-    receive do
-      {:tick, _state} -> :ok
-    after
-      10 -> flunk()
-    end
+  test "it can be started with the poll loop off" do
+    {:ok, pid} = GenPoller.start_link(NoStartTestPoller, %{receiver: self(), poll_sleep: 1})
+    refute_receive_tick()
+    GenPoller.start_loop(pid)
+    assert_receive_tick_then(fn _ -> :ok end)
   end
 end

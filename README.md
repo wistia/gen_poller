@@ -45,3 +45,13 @@ defmodule Heartbeat do
   end
 end
 ```
+
+## GenPoller.Stateless
+
+Sometimes there's less mental overhead knowing a poller is stateless.
+For those cases you can use `GenPoller.Stateless` instead which does not allow
+the tick loop to modify the poller's state.
+
+Note that `GenPoller.Stateless` is still a `GenServer` under the hood which means it still confomrs to OTP message passing
+(e.g. it responds correctly to `:sys.get_state`) and it can still implement normal stateful `handle_{call,cast}`
+handlers while simultaneously supporting a stateless daemon loop.

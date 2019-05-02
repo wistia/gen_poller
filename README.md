@@ -8,7 +8,7 @@ a simple, generic behaviour for doing stuff on some interval
 defmodule Heartbeat do
   use GenPoller
 
-  def start_link(opts \\ [])
+  def start_link(opts \\ []) do
     GenPoller.start_link(__MODULE__, %{poll_sleep: @poll_sleep, call_count: 0, is_retry: false}, opts)
   end
 
